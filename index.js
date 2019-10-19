@@ -11,36 +11,55 @@ var bounds = {
     west: 10.767297
 } 
       
-const crawl = (lat, lon) => {
+const crawl = (lat, lng) => {
     const googleMapsClient = require('@google/maps').createClient({
         key: 'AIzaSyClLCfnSJ_BXOX3CdQ25HivWRMyK7yKqss',
         Promise: Promise,
     });
     return googleMapsClient.places({
-        location:point:{
-            
+        location:{
+            latitude: lat,
+            longitude:lng
         },
         radius: 500,
-        type: "bank"
+        type: "bus_station"
     }).asPromise();
 }
 
-async function myTest(lat, lon) {
+async function myTest() {
     try {
 
         await database.connect;
         const processedData = []
-        const data = await crawl(lat, lon);
-        console.log(data.json.results.length)
-        for (let raw of data.json.results) {
-            const obj = {
-                name: raw.name,
-                address: raw.formatted_address,
-                location: raw.geometry.location,
-                type: raw.types
+
+        const listPoints = [{
+            lat:"10.7333542314",
+            lng:"106.5653151974"
+        },{
+            lat:"10.8009117",
+            lng:"106.7419111"
+        },{
+            lat:"10.8014289",
+            lng:"106.7445998"
+        },{
+            lat:"10.77675",
+            lng:"106.602489"
+        }];
+        for(let point  of listPoints){
+            const data = await crawl(point.lat, point.lng);
+            console.log(data.json.results.length)
+            
+            for (let raw of data.json.results) {
+                const obj = {
+                    placeId: raw.id,
+                    name: raw.name,
+                    address: raw.formatted_address,
+                    location: raw.geometry.location,
+                    type: raw.types
+                }
+                PlaceModel.create(obj);
+                processedData.push(obj);
             }
-            PlaceModel.create(obj);
-            processedData.push(obj);
         }
         console.log(processedData)
     } catch (error) {
